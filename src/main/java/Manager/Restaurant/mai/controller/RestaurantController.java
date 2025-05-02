@@ -1,6 +1,5 @@
 package Manager.Restaurant.mai.controller;
 
-import Manager.Restaurant.mai.entity.MenuItem;
 import Manager.Restaurant.mai.entity.Restaurant;
 import Manager.Restaurant.mai.repository.MenuItemRepository;
 import Manager.Restaurant.mai.repository.RestaurantRepository;
@@ -36,7 +35,7 @@ public class RestaurantController {
 
     // POST /restaurants/{id}/menu
     @PostMapping("/{id}/menu")
-    public ResponseEntity<?> addMenuItem(@PathVariable Long id, @RequestBody MenuItem menuItem) {
+    public ResponseEntity<?> addMenuItem(@PathVariable Long id, @RequestBody FoodItem menuItem) {
         Optional<Restaurant> restaurantOpt = restaurantRepo.findById(id);
         if (restaurantOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -46,7 +45,7 @@ public class RestaurantController {
         menuItem.setCreatedAt(LocalDateTime.now());
         menuItem.setUpdatedAt(LocalDateTime.now());
 
-        MenuItem saved = menuItemRepo.save(menuItem);
+        FoodItem saved = menuItemRepo.save(menuItem);
         return ResponseEntity.ok(saved);
     }
 
@@ -55,15 +54,15 @@ public class RestaurantController {
     public ResponseEntity<?> updateMenuItem(
             @PathVariable Long id,
             @PathVariable Long menuId,
-            @RequestBody MenuItem updatedItem
+            @RequestBody FoodItem updatedItem
     ) {
-        Optional<MenuItem> itemOpt = menuItemRepo.findById(menuId);
+        Optional<FoodItem> itemOpt = menuItemRepo.findById(menuId);
 
         if (itemOpt.isEmpty() || !itemOpt.get().getRestaurant().getResId().equals(id)) {
             return ResponseEntity.notFound().build();
         }
 
-        MenuItem item = itemOpt.get();
+        FoodItem item = itemOpt.get();
         item.setName(updatedItem.getName());
         item.setDescription(updatedItem.getDescription());
         item.setPrice(updatedItem.getPrice());

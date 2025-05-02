@@ -4,52 +4,44 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
+
 @Entity
 @Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
-    private String userSlug;
-    private String userName;
-    private String userEmail;
-    private String userPassword;
-    private String userSalt;
-    private String userGender;
-    private String userPhone;
-    private String userAvatar;
-    private LocalDateTime userDob;
+    private String name;
 
-    @ManyToOne
-    @JoinColumn(name = "user_role")
-    private Role role;
+    private String email;
 
-    private String userStatus;
+    private String phoneNumber;
 
-    @Column(nullable = false)
-    private boolean isDeleted = false;
+    private String address;
 
-    // Constructor dùng khi khởi tạo User mới (không có userId)
-    public User(String userSlug, String userName, String userEmail, String userPassword, String userSalt,
-                String userGender, String userPhone, String userAvatar, LocalDateTime userDob,
-                Role role, String userStatus) {
-        this.userSlug = userSlug;
-        this.userName = userName;
-        this.userEmail = userEmail;
-        this.userPassword = userPassword;
-        this.userSalt = userSalt;
-        this.userGender = userGender;
-        this.userPhone = userPhone;
-        this.userAvatar = userAvatar;
-        this.userDob = userDob;
-        this.role = role;
-        this.userStatus = userStatus;
-        this.isDeleted = false;
+    private String profileImage;
+
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    // Constructor mới để khởi tạo User không có id
+    public User(String name, String email, String phoneNumber, String address, String profileImage) {
+        this.name = name;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+        this.profileImage = profileImage;
     }
 }

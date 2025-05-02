@@ -11,6 +11,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+
+/*
 @Configuration
 public class DataInitializer {
 
@@ -143,3 +145,5 @@ public class DataInitializer {
         };
     }
 }
+
+ */
