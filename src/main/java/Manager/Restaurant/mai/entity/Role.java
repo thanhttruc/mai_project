@@ -35,4 +35,10 @@ public class Role {
     private String roleGrantsAttributes;
 
 
+    public Role(String roleName, String roleSlug, String roleStatus) {
+        this.roleName = roleName;
+        this.roleSlug = roleSlug;
+        this.roleStatus = roleStatus;
+    }
+
 }

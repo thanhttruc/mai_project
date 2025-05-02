@@ -2,21 +2,15 @@ package Manager.Restaurant.mai.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 @Entity
 @Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class User implements UserDetails {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,7 +32,13 @@ public class User implements UserDetails {
 
     private String userStatus;
 
-    public User(String userSlug, String userName, String userEmail, String userPassword, String userSalt, String userGender, String userPhone, String userAvatar, LocalDateTime userDob, Role role, String userStatus) {
+    @Column(nullable = false)
+    private boolean isDeleted = false;
+
+    // Constructor dùng khi khởi tạo User mới (không có userId)
+    public User(String userSlug, String userName, String userEmail, String userPassword, String userSalt,
+                String userGender, String userPhone, String userAvatar, LocalDateTime userDob,
+                Role role, String userStatus) {
         this.userSlug = userSlug;
         this.userName = userName;
         this.userEmail = userEmail;
@@ -50,34 +50,6 @@ public class User implements UserDetails {
         this.userDob = userDob;
         this.role = role;
         this.userStatus = userStatus;
+        this.isDeleted = false;
     }
-
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(() -> role.getRoleName());
-    }
-
-
-    @Override
-    public String getPassword() {
-        return userPassword;
-    }
-
-    @Override
-    public String getUsername() {
-        return userEmail;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() { return true; }
-
-    @Override
-    public boolean isAccountNonLocked() { return true; }
-
-    @Override
-    public boolean isCredentialsNonExpired() { return true; }
-
-    @Override
-    public boolean isEnabled() { return "ACTIVE".equalsIgnoreCase(userStatus); }
 }

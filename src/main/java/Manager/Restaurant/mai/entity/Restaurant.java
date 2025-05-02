@@ -2,13 +2,15 @@ package Manager.Restaurant.mai.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "restaurants")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Restaurant {
 
     @Id
@@ -26,6 +28,7 @@ public class Restaurant {
     private String roles;
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
+    @JsonManagedReference
     private List<MenuItem> menuItems;
 
     public Restaurant(String name, String email, String password, String phone, String status, Boolean verify, String roles) {

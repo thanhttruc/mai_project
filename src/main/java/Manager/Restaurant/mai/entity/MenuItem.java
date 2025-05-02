@@ -4,11 +4,14 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "menu_items")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class MenuItem {
 
     @Id
@@ -17,6 +20,7 @@ public class MenuItem {
 
     @ManyToOne
     @JoinColumn(name = "res_item_id")
+    @JsonBackReference
     private Restaurant restaurant;
 
     private String name;
@@ -38,4 +42,3 @@ public class MenuItem {
         this.updatedAt = updatedAt;
     }
 }
-

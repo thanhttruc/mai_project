@@ -27,20 +27,21 @@ public class DataInitializer {
             VoucherRepository voucherRepo,
             ReviewRepository reviewRepo
     ) {
-        return args -> {
-            // --- ROLE ---
-            Role adminRole = new Role();
-            adminRole.setRoleName("Admin");
-            adminRole.setRoleSlug("admin");
-            adminRole.setRoleStatus("ACTIVE");
-            roleRepo.save(adminRole);
+            return args -> {
+                // --- ROLE ---
+                List<Role> roles = List.of(
+                        new Role("Admin", "admin", "ACTIVE"),
+                        new Role("User", "user", "ACTIVE"),
+                        new Role("Deliver", "deliver", "ACTIVE")
+                );
+                roleRepo.saveAll(roles);
 
             // --- USER ---
             List<User> users = List.of(
-                    new User("mai-quynh", "Mai Quỳnh", "mai@example.com", "hashedpassword", "randomsalt", "Nữ", "0912345678", "https://example.com/avatar.jpg", LocalDateTime.of(1998, 5, 20, 0, 0), adminRole, "ACTIVE"),
-                    new User("tuan-anh", "Tuấn Anh", "tuan@example.com", "hashedpassword2", "salt2", "Nam", "0911222333", "https://example.com/avatar2.jpg", LocalDateTime.of(1995, 8, 15, 0, 0), adminRole, "ACTIVE"),
-                    new User("thu-hien", "Thu Hiền", "hien@example.com", "hashedpassword3", "salt3", "Nữ", "0911000099", "https://example.com/avatar3.jpg", LocalDateTime.of(2000, 1, 5, 0, 0), adminRole, "ACTIVE"),
-                    new User("minh-tri", "Minh Trí", "tri@example.com", "hashedpassword4", "salt4", "Nam", "0999888777", "https://example.com/avatar4.jpg", LocalDateTime.of(1992, 12, 12, 0, 0), adminRole, "ACTIVE")
+                    new User("mai-quynh", "Mai Quỳnh", "mai@example.com", "hashedpassword", "randomsalt", "Nữ", "0912345678", "https://example.com/avatar.jpg", LocalDateTime.of(1998, 5, 20, 0, 0), roles.get(1), "ACTIVE"),
+                    new User("tuan-anh", "Tuấn Anh", "tuan@example.com", "hashedpassword2", "salt2", "Nam", "0911222333", "https://example.com/avatar2.jpg", LocalDateTime.of(1995, 8, 15, 0, 0), roles.get(1), "ACTIVE"),
+                    new User("thu-hien", "Thu Hiền", "hien@example.com", "hashedpassword3", "salt3", "Nữ", "0911000099", "https://example.com/avatar3.jpg", LocalDateTime.of(2000, 1, 5, 0, 0), roles.get(1), "ACTIVE"),
+                    new User("minh-tri", "Minh Trí", "tri@example.com", "hashedpassword4", "salt4", "Nam", "0999888777", "https://example.com/avatar4.jpg", LocalDateTime.of(1992, 12, 12, 0, 0), roles.get(1), "ACTIVE")
             );
             userRepo.saveAll(users);
 
