@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -35,7 +37,15 @@ public class User {
     @Column(nullable = false)
     private boolean isDeleted = false;
 
-    // Constructor dùng khi khởi tạo User mới (không có userId)
+    @OneToMany(mappedBy = "user")
+    private List<Notification> notifications;
+
+    @OneToMany(mappedBy = "user")
+    private List<Address> addresses;
+
+    @OneToMany(mappedBy = "user")
+    private List<Review> reviews;
+
     public User(String userSlug, String userName, String userEmail, String userPassword, String userSalt,
                 String userGender, String userPhone, String userAvatar, LocalDateTime userDob,
                 Role role, String userStatus) {

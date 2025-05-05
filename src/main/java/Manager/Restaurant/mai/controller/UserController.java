@@ -1,8 +1,7 @@
 package Manager.Restaurant.mai.controller;
 
 import Manager.Restaurant.mai.entity.User;
-import Manager.Restaurant.mai.repository.NotificationRepository;
-import Manager.Restaurant.mai.repository.UserRepository;
+import Manager.Restaurant.mai.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +15,9 @@ import java.util.Optional;
 public class UserController {
 
     private final UserRepository userRepo;
+    private final OrderRepository orderRepo;
+    private final AddressRepository addressRepo;
+    private final ReviewRepository reviewRepo;
     private final NotificationRepository notificationRepo;
 
     // ✅ Lấy thông tin người dùng theo ID (chỉ khi chưa bị xoá)
@@ -59,20 +61,38 @@ public class UserController {
 
         User user = userOpt.get();
 
-        // Nếu đã xoá thì không làm lại
         if (Boolean.TRUE.equals(user.isDeleted())) {
             return ResponseEntity.badRequest().body("Người dùng đã bị xoá trước đó.");
         }
 
-        // Đánh dấu đã xoá
+        // Soft delete user
         user.setDeleted(true);
         userRepo.save(user);
 
-        // Nếu muốn, có thể xoá hoặc đánh dấu thông báo là đã xoá
-        notificationRepo.deleteByUserUserId(userId);  // Hàm này cần được định nghĩa rõ trong NotificationRepository
+        // Soft delete liên quan
+        notificationRepo.findByUserUserIdAndIsDeletedFalse(userId).forEach(n -> {
+            n.setDeleted(true);
+            notificationRepo.save(n);
+        });
 
-        return ResponseEntity.ok("Đã xoá người dùng (soft delete).");
+        addressRepo.findByUserUserIdAndIsDeletedFalse(userId).forEach(a -> {
+            a.setDeleted(true);
+            addressRepo.save(a);
+        });
+
+        reviewRepo.findByUserUserIdAndIsDeletedFalse(userId).forEach(r -> {
+            r.setDeleted(true);
+            reviewRepo.save(r);
+        });
+
+        orderRepo.findByUserUserIdAndIsDeletedFalse(userId).forEach(o -> {
+            o.setDeleted(true);
+            orderRepo.save(o);
+        });
+
+        return ResponseEntity.ok("Đã xoá người dùng và các thông tin liên quan (soft delete).");
     }
+
 
 
     // ✅ Lấy danh sách tất cả người dùng chưa bị xoá

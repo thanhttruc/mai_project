@@ -1,9 +1,10 @@
 package Manager.Restaurant.mai.repository;
 
-
 import Manager.Restaurant.mai.entity.Review;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ReviewRepository extends JpaRepository<Review, Long> {
-}
+import java.util.List;
 
+public interface ReviewRepository extends JpaRepository<Review, Long> {
+    List<Review> findByUserUserIdAndIsDeletedFalse(Long userId);
+}

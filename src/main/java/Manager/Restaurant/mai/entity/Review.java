@@ -1,8 +1,8 @@
 package Manager.Restaurant.mai.entity;
 
-
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -25,5 +25,16 @@ public class Review {
 
     private String comment;
     private LocalDateTime createdAt;
-}
 
+    @Column(nullable = false)
+    private boolean isDeleted = false;
+
+    public Review(Long reviewId, User user, MenuItem item, String comment, LocalDateTime createdAt) {
+        this.reviewId = reviewId;
+        this.user = user;
+        this.item = item;
+        this.comment = comment;
+        this.createdAt = createdAt;
+        this.isDeleted = false;
+    }
+}

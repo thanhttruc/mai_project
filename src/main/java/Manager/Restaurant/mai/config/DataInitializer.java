@@ -107,6 +107,7 @@ public class DataInitializer {
                 if (i % 3 == 0 && userIndex < vouchers.size()) {
                     newOrder.setVoucher(vouchers.get(userIndex));
                 }
+                newOrder.setDeleted(false);
 
                 orderRepo.save(newOrder);
             }
