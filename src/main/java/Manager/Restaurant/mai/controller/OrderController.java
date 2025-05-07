@@ -1,14 +1,15 @@
 package Manager.Restaurant.mai.controller;
 
+import Manager.Restaurant.mai.dto.OrderDTO;
+import Manager.Restaurant.mai.dto.OrderResponseDTO;
+import Manager.Restaurant.mai.dto.PaymentDTO;
 import Manager.Restaurant.mai.entity.*;
 import Manager.Restaurant.mai.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -20,23 +21,12 @@ public class OrderController {
     private final OrderRepository orderRepo;
     private final UserRepository userRepo;
     private final AddressRepository addressRepo;
-    private final PaymentRepository paymentRepo;
     private final VoucherRepository voucherRepo;
 
-    // POST /orders - Tạo đơn hàng
     @PostMapping
-    public ResponseEntity<?> createOrder(@RequestBody Map<String, Object> data) {
-        Long userId = Long.valueOf(data.get("userId").toString());
-        Long addressId = Long.valueOf(data.get("addressId").toString());
-        BigDecimal amount = new BigDecimal(data.get("totalAmount").toString());
-        String status = data.getOrDefault("orderStatus", "PENDING").toString();
-        Long voucherId = data.get("voucherId") != null ? Long.valueOf(data.get("voucherId").toString()) : null;
-
-
-        Optional<User> userOpt = userRepo.findById(userId);
-        Optional<Address> addressOpt = addressRepo.findById(addressId);
-
-
+    public ResponseEntity<?> createOrder(@RequestBody OrderDTO dto) {
+        Optional<User> userOpt = userRepo.findById(dto.getUserId());
+        Optional<Address> addressOpt = addressRepo.findById(dto.getAddressId());
 
         if (userOpt.isEmpty() || addressOpt.isEmpty()) {
             return ResponseEntity.badRequest().body("Thông tin người dùng hoặc địa chỉ không hợp lệ!");
@@ -52,54 +42,71 @@ public class OrderController {
         Order order = new Order();
         order.setUser(user);
         order.setShippingAddress(address);
-        order.setTotalAmount(amount);
-        order.setOrderStatus(status);
+        order.setTotalAmount(dto.getTotalAmount());
+        order.setOrderStatus(dto.getOrderStatus() != null ? dto.getOrderStatus() : "PENDING");
         order.setOrderDate(LocalDateTime.now());
         order.setOrderCreatedAt(LocalDateTime.now());
         order.setOrderUpdatedAt(LocalDateTime.now());
-        order.setDeleted(false); // đảm bảo isDeleted = false khi tạo
+        order.setDeleted(false);
+        order.setPayment(null);
 
-        if (voucherId != null) {
-            voucherRepo.findById(voucherId).ifPresent(order::setVoucher);
+        if (dto.getVoucherId() != null) {
+            voucherRepo.findById(dto.getVoucherId()).ifPresent(order::setVoucher);
         }
 
-        return ResponseEntity.ok(orderRepo.save(order));
+        Order savedOrder = orderRepo.save(order);
+
+        OrderResponseDTO response = OrderResponseDTO.builder()
+                .orderId(savedOrder.getOrderId())
+                .orderStatus(savedOrder.getOrderStatus())
+                .orderDate(savedOrder.getOrderDate())
+                .totalAmount(savedOrder.getTotalAmount())
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
-    // GET /orders/{id} - Xem trạng thái đơn hàng
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getOrderStatus(@PathVariable Long id) {
-        Optional<Order> orderOpt = orderRepo.findById(id);
-
-        if (orderOpt.isEmpty() || orderOpt.get().isDeleted()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Order order = orderOpt.get();
-        return ResponseEntity.ok(Map.of(
-                "orderId", order.getOrderId(),
-                "status", order.getOrderStatus(),
-                "updatedAt", order.getOrderUpdatedAt()
-        ));
+        return orderRepo.findById(id)
+                .filter(order -> !order.isDeleted())
+                .map(order -> ResponseEntity.ok(Map.of(
+                        "orderId", order.getOrderId(),
+                        "status", order.getOrderStatus(),
+                        "updatedAt", order.getOrderUpdatedAt()
+                )))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // PUT /orders/{id}/cancel - Hủy đơn hàng
     @PutMapping("/{id}/cancel")
     public ResponseEntity<?> cancelOrder(@PathVariable Long id) {
-        Optional<Order> orderOpt = orderRepo.findById(id);
+        return orderRepo.findById(id)
+                .filter(order -> !order.isDeleted())
+                .map(order -> {
+                    if ("CANCELLED".equalsIgnoreCase(order.getOrderStatus())) {
+                        return ResponseEntity.badRequest().body("Đơn hàng đã bị hủy trước đó.");
+                    }
+                    if (order.getPayment() != null &&
+                            "PAID".equalsIgnoreCase(order.getPayment().getPaymentStatus())) {
+                        return ResponseEntity.badRequest().body("Không thể hủy đơn đã thanh toán.");
+                    }
 
-        if (orderOpt.isEmpty() || orderOpt.get().isDeleted()) {
-            return ResponseEntity.notFound().build();
-        }
+                    order.setOrderStatus("CANCELLED");
+                    order.setOrderUpdatedAt(LocalDateTime.now());
+                    Order cancelledOrder = orderRepo.save(order);
 
-        Order order = orderOpt.get();
+                    OrderResponseDTO response = OrderResponseDTO.builder()
+                            .orderId(cancelledOrder.getOrderId())
+                            .orderStatus(cancelledOrder.getOrderStatus())
+                            .orderDate(cancelledOrder.getOrderDate())
+                            .updatedAt(cancelledOrder.getOrderUpdatedAt())
+                            .totalAmount(cancelledOrder.getTotalAmount())
+                            .build();
 
-        if ("CANCELLED".equalsIgnoreCase(order.getOrderStatus())) {
-            return ResponseEntity.badRequest().body("Đơn hàng đã bị hủy trước đó.");
-        }
-
-        order.setOrderStatus("CANCELLED");
-        order.setOrderUpdatedAt(LocalDateTime.now());
-        return ResponseEntity.ok(orderRepo.save(order));
+                    return ResponseEntity.ok(response);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
+
 }

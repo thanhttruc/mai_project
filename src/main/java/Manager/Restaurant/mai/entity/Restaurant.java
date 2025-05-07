@@ -27,7 +27,7 @@ public class Restaurant {
     @Column(columnDefinition = "json")
     private String roles;
 
-    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<MenuItem> menuItems;
 

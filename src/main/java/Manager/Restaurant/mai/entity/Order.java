@@ -19,11 +19,11 @@ public class Order {
     private Long orderId;
 
     @ManyToOne
-    @JoinColumn(name = "order_user_id")
+    @JoinColumn(name = "order_user_id", nullable = false)
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "order_payment_id")
+    @JoinColumn(name = "order_payment_id", nullable = true)
     private Payment payment;
 
     private LocalDateTime orderDate;
@@ -31,7 +31,7 @@ public class Order {
     private String orderStatus;
 
     @ManyToOne
-    @JoinColumn(name = "order_shipping_address")
+    @JoinColumn(name = "order_shipping_address", nullable = false)
     private Address shippingAddress;
 
     private LocalDateTime orderCreatedAt;
@@ -43,12 +43,4 @@ public class Order {
 
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
-
-    public boolean isDeleted() {
-        return isDeleted;
-    }
-
-    public void setDeleted(boolean deleted) {
-        this.isDeleted = deleted;
-    }
 }

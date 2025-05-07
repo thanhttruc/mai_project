@@ -1,5 +1,6 @@
 package Manager.Restaurant.mai.controller;
 
+import Manager.Restaurant.mai.dto.UserProfileDTO;
 import Manager.Restaurant.mai.entity.User;
 import Manager.Restaurant.mai.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+
+import static java.util.stream.Collectors.toList;
 
 @RestController
 @RequestMapping("/user")
@@ -23,12 +26,28 @@ public class UserController {
     // ✅ Lấy thông tin người dùng theo ID (chỉ khi chưa bị xoá)
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(@RequestParam Long userId) {
-        Optional<User> user = userRepo.findById(userId)
-                .filter(u -> !Boolean.TRUE.equals(u.isDeleted()));
+        Optional<User> userOpt = userRepo.findById(userId)
+                .filter(u -> !u.isDeleted());
 
-        return user.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        if (userOpt.isEmpty()) return ResponseEntity.notFound().build();
+
+        User user = userOpt.get();
+        UserProfileDTO dto = new UserProfileDTO(
+                user.getUserId(),
+                user.getUserSlug(),
+                user.getUserName(),
+                user.getUserEmail(),
+                user.getUserPhone(),
+                user.getUserGender(),
+                user.getUserAvatar(),
+                user.getUserDob(),
+                user.getUserStatus(),
+                user.getRole() != null ? user.getRole().getRoleName() : null
+        );
+
+        return ResponseEntity.ok(dto);
     }
+
 
     // ✅ Cập nhật thông tin người dùng (chỉ nếu chưa bị xoá)
     @PutMapping("/update")
@@ -80,7 +99,7 @@ public class UserController {
             addressRepo.save(a);
         });
 
-        reviewRepo.findByUserUserIdAndIsDeletedFalse(userId).forEach(r -> {
+        reviewRepo.findByUser_UserIdAndIsDeletedFalse(userId).forEach(r -> {
             r.setDeleted(true);
             reviewRepo.save(r);
         });
@@ -97,12 +116,26 @@ public class UserController {
 
     // ✅ Lấy danh sách tất cả người dùng chưa bị xoá
     @GetMapping("/all")
-    public ResponseEntity<List<User>> getAllUsers() {
+    public ResponseEntity<List<UserProfileDTO>> getAllUsers() {
         List<User> activeUsers = userRepo.findAll()
                 .stream()
                 .filter(u -> !Boolean.TRUE.equals(u.isDeleted()))
                 .toList();
 
-        return ResponseEntity.ok(activeUsers);
+        List<UserProfileDTO> result = activeUsers.stream().map(user -> new UserProfileDTO(
+                user.getUserId(),
+                user.getUserSlug(),
+                user.getUserName(),
+                user.getUserEmail(),
+                user.getUserPhone(),
+                user.getUserGender(),
+                user.getUserAvatar(),
+                user.getUserDob(),
+                user.getUserStatus(),
+                user.getRole() != null ? user.getRole().getRoleName() : null
+        )).toList();
+
+        return ResponseEntity.ok(result);
     }
+
 }

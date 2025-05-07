@@ -125,22 +125,23 @@ public class DataInitializer {
 
 
             // --- REVIEW ---
-            List<Review> reviews = List.of(
-                    new Review(null, users.get(1), menuItems.get(0), "Ngon, giá hợp lý", LocalDateTime.now()),
-                    new Review(null, users.get(2), menuItems.get(1), "Đồ uống mát, thơm mùi cam", LocalDateTime.now()),
-                    new Review(null, users.get(3), menuItems.get(2), "Bún chả chuẩn vị Hà Nội", LocalDateTime.now()),
-                    new Review(null, users.get(1), menuItems.get(3), "Phở ngon, nước dùng ngọt", LocalDateTime.now()),
-                    new Review(null, users.get(2), menuItems.get(4), "Bánh mì giòn, pate béo", LocalDateTime.now()),
-                    new Review(null, users.get(0), menuItems.get(5), "Sinh tố bơ tuyệt vời!", LocalDateTime.now()),
-                    new Review(null, users.get(2), menuItems.get(0), "Cơm gà xối mỡ ngon!", LocalDateTime.now()),
-                    new Review(null, users.get(3), menuItems.get(1), "Trà đào mát mẻ, hơi ngọt", LocalDateTime.now()),
-                    new Review(null, users.get(1), menuItems.get(5), "Sinh tố bơ hơi đặc", LocalDateTime.now()),
-                    new Review(null, users.get(3), menuItems.get(3), "Phở bò đậm đà, thơm ngon", LocalDateTime.now())
-            );
-            reviewRepo.saveAll(reviews);
+                List<Review> reviews = List.of(
+                        new Review(null, users.get(1), menuItems.get(0), menuItems.get(0).getRestaurant(), "Ngon, giá hợp lý", LocalDateTime.now()),
+                        new Review(null, users.get(2), menuItems.get(1), menuItems.get(1).getRestaurant(), "Đồ uống mát, thơm mùi cam", LocalDateTime.now()),
+                        new Review(null, users.get(3), menuItems.get(2), menuItems.get(2).getRestaurant(), "Bún chả chuẩn vị Hà Nội", LocalDateTime.now()),
+                        new Review(null, users.get(1), menuItems.get(3), menuItems.get(3).getRestaurant(), "Phở ngon, nước dùng ngọt", LocalDateTime.now()),
+                        new Review(null, users.get(2), menuItems.get(4), menuItems.get(4).getRestaurant(), "Bánh mì giòn, pate béo", LocalDateTime.now()),
+                        new Review(null, users.get(0), menuItems.get(5), menuItems.get(5).getRestaurant(), "Sinh tố bơ tuyệt vời!", LocalDateTime.now()),
+                        new Review(null, users.get(2), menuItems.get(0), menuItems.get(0).getRestaurant(), "Cơm gà xối mỡ ngon!", LocalDateTime.now()),
+                        new Review(null, users.get(3), menuItems.get(1), menuItems.get(1).getRestaurant(), "Trà đào mát mẻ, hơi ngọt", LocalDateTime.now()),
+                        new Review(null, users.get(1), menuItems.get(5), menuItems.get(5).getRestaurant(), "Sinh tố bơ hơi đặc", LocalDateTime.now()),
+                        new Review(null, users.get(3), menuItems.get(3), menuItems.get(3).getRestaurant(), "Phở bò đậm đà, thơm ngon", LocalDateTime.now())
+                );
+                reviewRepo.saveAll(reviews);
 
 
-            System.out.println("✅ Dữ liệu mẫu đầy đủ đã được khởi tạo.");
+
+                System.out.println("✅ Dữ liệu mẫu đầy đủ đã được khởi tạo.");
         };
     }
 }

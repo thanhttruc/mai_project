@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -22,7 +21,13 @@ public class PaymentController {
     // POST /payment/process - Xử lý thanh toán
     @PostMapping("/process")
     public ResponseEntity<?> processPayment(@RequestBody Map<String, Object> data) {
-        Long orderId = Long.valueOf(data.get("orderId").toString());
+        Long orderId;
+        try {
+            orderId = Long.valueOf(data.get("orderId").toString());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Thiếu hoặc sai định dạng orderId.");
+        }
+
         String method = data.getOrDefault("paymentMethod", "CASH").toString();
         String gateway = data.getOrDefault("paymentGateway", "manual").toString();
         String reference = data.getOrDefault("paymentReference", "REF-" + orderId).toString();
@@ -33,6 +38,13 @@ public class PaymentController {
         }
 
         Order order = orderOpt.get();
+        if (order.isDeleted()) {
+            return ResponseEntity.badRequest().body("Đơn hàng đã bị xoá.");
+        }
+
+        if ("PAID".equalsIgnoreCase(order.getOrderStatus())) {
+            return ResponseEntity.badRequest().body("Đơn hàng đã được thanh toán.");
+        }
 
         Payment payment = new Payment();
         payment.setPaymentMethod(method);
@@ -43,10 +55,10 @@ public class PaymentController {
         payment.setPaymentGateway(gateway);
 
         Payment savedPayment = paymentRepo.save(payment);
+
         order.setPayment(savedPayment);
         order.setOrderStatus("PAID");
         order.setOrderUpdatedAt(LocalDateTime.now());
-
         orderRepo.save(order);
 
         return ResponseEntity.ok(Map.of(
@@ -56,7 +68,7 @@ public class PaymentController {
         ));
     }
 
-    // GET /payment/status/{order_id}
+    // GET /payment/status/{orderId}
     @GetMapping("/status/{orderId}")
     public ResponseEntity<?> getPaymentStatus(@PathVariable Long orderId) {
         Optional<Order> orderOpt = orderRepo.findById(orderId);
@@ -65,38 +77,66 @@ public class PaymentController {
         }
 
         Order order = orderOpt.get();
-        if (order.getPayment() == null) {
+        if (order.isDeleted()) {
+            return ResponseEntity.badRequest().body("Đơn hàng đã bị xoá.");
+        }
+
+        Payment payment = order.getPayment();
+        if (payment == null) {
             return ResponseEntity.ok(Map.of("status", "UNPAID"));
         }
 
         return ResponseEntity.ok(Map.of(
-                "paymentStatus", order.getPayment().getPaymentStatus(),
-                "paymentMethod", order.getPayment().getPaymentMethod(),
-                "amount", order.getPayment().getPaymentAmount()
+                "paymentStatus", payment.getPaymentStatus(),
+                "paymentMethod", payment.getPaymentMethod(),
+                "amount", payment.getPaymentAmount()
         ));
     }
 
-    // POST /payment/refund/{order_id}
+    // POST /payment/refund/{orderId}
     @PostMapping("/refund/{orderId}")
-    public ResponseEntity<?> refundPayment(@PathVariable Long orderId) {
+    public ResponseEntity<?> refundPayment(@PathVariable("orderId") Long orderId) {
+        if (orderId == null) {
+            return ResponseEntity.badRequest().body("orderId không được để trống.");
+        }
+
         Optional<Order> orderOpt = orderRepo.findById(orderId);
         if (orderOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(404).body("Không tìm thấy đơn hàng.");
         }
 
         Order order = orderOpt.get();
-        if (order.getPayment() == null || !"PAID".equals(order.getPayment().getPaymentStatus())) {
-            return ResponseEntity.badRequest().body("Không thể hoàn tiền vì chưa thanh toán hoặc đã hoàn.");
+
+        if (order.isDeleted()) {
+            return ResponseEntity.badRequest().body("Đơn hàng đã bị xoá.");
         }
 
-        order.getPayment().setPaymentStatus("REFUNDED");
-        order.getPayment().setPaymentDate(LocalDateTime.now());
-        paymentRepo.save(order.getPayment());
+        Payment payment = order.getPayment();
+        if (payment == null) {
+            return ResponseEntity.badRequest().body("Đơn hàng chưa được thanh toán.");
+        }
+
+        if ("REFUNDED".equalsIgnoreCase(payment.getPaymentStatus())) {
+            return ResponseEntity.badRequest().body("Đơn hàng đã được hoàn tiền trước đó.");
+        }
+
+        if (!"SUCCESS".equalsIgnoreCase(payment.getPaymentStatus())) {
+            return ResponseEntity.badRequest().body("Không thể hoàn tiền cho đơn hàng chưa thanh toán.");
+        }
+
+        // Cập nhật trạng thái hoàn tiền
+        payment.setPaymentStatus("REFUNDED");
+        payment.setPaymentDate(LocalDateTime.now());
+        paymentRepo.save(payment);
 
         order.setOrderStatus("REFUNDED");
         order.setOrderUpdatedAt(LocalDateTime.now());
         orderRepo.save(order);
 
-        return ResponseEntity.ok(Map.of("refundStatus", "REFUNDED"));
+        return ResponseEntity.ok(Map.of(
+                "orderId", order.getOrderId(),
+                "refundStatus", "REFUNDED",
+                "refundedAt", payment.getPaymentDate()
+        ));
     }
 }

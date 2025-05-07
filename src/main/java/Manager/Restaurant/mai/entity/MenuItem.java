@@ -19,7 +19,7 @@ public class MenuItem {
     private Long itemId;
 
     @ManyToOne
-    @JoinColumn(name = "res_item_id")
+    @JoinColumn(name = "restaurant_id", nullable = false) // Sửa lại tên cột
     @JsonBackReference
     private Restaurant restaurant;
 

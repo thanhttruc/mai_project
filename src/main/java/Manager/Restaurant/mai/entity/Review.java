@@ -29,10 +29,15 @@ public class Review {
     @Column(nullable = false)
     private boolean isDeleted = false;
 
-    public Review(Long reviewId, User user, MenuItem item, String comment, LocalDateTime createdAt) {
+    @ManyToOne
+    @JoinColumn(name = "restaurant_id")
+    private Restaurant restaurant;
+
+    public Review(Long reviewId, User user, MenuItem item, Restaurant restaurant, String comment, LocalDateTime createdAt) {
         this.reviewId = reviewId;
         this.user = user;
         this.item = item;
+        this.restaurant = restaurant;
         this.comment = comment;
         this.createdAt = createdAt;
         this.isDeleted = false;

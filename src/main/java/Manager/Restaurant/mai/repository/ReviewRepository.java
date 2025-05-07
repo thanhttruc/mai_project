@@ -1,10 +1,18 @@
 package Manager.Restaurant.mai.repository;
 
-import Manager.Restaurant.mai.entity.Review;
 import org.springframework.data.jpa.repository.JpaRepository;
-
+import org.springframework.stereotype.Repository;
+import Manager.Restaurant.mai.entity.Review;
 import java.util.List;
 
+@Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
-    List<Review> findByUserUserIdAndIsDeletedFalse(Long userId);
+    // Tìm kiếm review theo userId và isDeleted là false
+    List<Review> findByUser_UserIdAndIsDeletedFalse(Long userId);
+
+    // Tìm kiếm review theo restaurantId và isDeleted là false
+    List<Review> findByRestaurant_ResIdAndIsDeletedFalse(Long restaurantId);
+
+    // Tìm kiếm review theo menuItemId và isDeleted là false
+    List<Review> findByItem_ItemIdAndIsDeletedFalse(Long itemId);
 }

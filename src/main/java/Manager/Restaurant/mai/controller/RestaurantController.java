@@ -50,20 +50,25 @@ public class RestaurantController {
         return ResponseEntity.ok(saved);
     }
 
-    // PUT /restaurants/{id}/menu/{menuId}
-    @PutMapping("/{id}/menu/{menuId}")
+    // PUT /restaurants/{restaurantId}/menu/{menuId}
+    @PutMapping("/{restaurantId}/menu/{menuId}")
     public ResponseEntity<?> updateMenuItem(
-            @PathVariable Long id,
+            @PathVariable Long restaurantId,
             @PathVariable Long menuId,
             @RequestBody MenuItem updatedItem
     ) {
+        Optional<Restaurant> restaurantOpt = restaurantRepo.findById(restaurantId);
         Optional<MenuItem> itemOpt = menuItemRepo.findById(menuId);
 
-        if (itemOpt.isEmpty() || !itemOpt.get().getRestaurant().getResId().equals(id)) {
+        if (restaurantOpt.isEmpty() || itemOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
         MenuItem item = itemOpt.get();
+        if (!item.getRestaurant().getResId().equals(restaurantId)) {
+            return ResponseEntity.badRequest().body("MenuItem không thuộc nhà hàng này.");
+        }
+
         item.setName(updatedItem.getName());
         item.setDescription(updatedItem.getDescription());
         item.setPrice(updatedItem.getPrice());
@@ -71,7 +76,6 @@ public class RestaurantController {
         item.setImageUrl(updatedItem.getImageUrl());
         item.setUpdatedAt(LocalDateTime.now());
 
-        menuItemRepo.save(item);
-        return ResponseEntity.ok(item);
+        return ResponseEntity.ok(menuItemRepo.save(item));
     }
 }
