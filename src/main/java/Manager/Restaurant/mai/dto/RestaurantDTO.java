@@ -2,6 +2,7 @@ package Manager.Restaurant.mai.dto;
 import lombok.*;
 import java.util.List;
 import Manager.Restaurant.mai.entity.*;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -23,8 +24,9 @@ public class RestaurantDTO {
     private Double distance;
     private List<String> categories;
     private Long createdAt;
+    private Integer durationInMinutes;
 
-    public static RestaurantDTO fromEntity(Restaurant res) {
+    public static RestaurantDTO fromEntity(Restaurant res, double distanceInMeters, double durationInSeconds) {
         return new RestaurantDTO(
                 res.getId(),
                 res.getName(),
@@ -39,9 +41,10 @@ public class RestaurantDTO {
                 res.getPhoneNumber(),
                 res.getLikes(),
                 res.getReviewsCount(),
-                res.getDistance(),
+                distanceInMeters / 1000.0,
                 res.getCategories(),
-                res.getCreatedAt()
+                res.getCreatedAt(),
+                (int)durationInSeconds / 60
         );
     }
 }

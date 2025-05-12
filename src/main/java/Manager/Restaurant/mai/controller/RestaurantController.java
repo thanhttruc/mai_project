@@ -4,11 +4,13 @@ import Manager.Restaurant.mai.entity.MenuItem;
 import Manager.Restaurant.mai.entity.Restaurant;
 import Manager.Restaurant.mai.dto.*;
 import Manager.Restaurant.mai.repository.*;
+import Manager.Restaurant.mai.service.DistanceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,22 +20,64 @@ import java.util.Optional;
 public class RestaurantController {
 
     private final RestaurantRepository restaurantRepo;
+    private final DistanceService distanceService;
     private final MenuItemRepository menuItemRepo;
 
     // GET /restaurants
     @GetMapping
-    public ResponseEntity<List<RestaurantDTO>> getAllRestaurants() {
-        List<RestaurantDTO> result = restaurantRepo.findAll().stream()
-                .map(RestaurantDTO::fromEntity)
+    public ResponseEntity<List<RestaurantDTO>> getAllRestaurants(
+        @RequestParam(required = true) double userLat,
+        @RequestParam(required = true) double userLng
+    ) {
+        // List<RestaurantDTO> result = restaurantRepo.findAll().stream()
+        //         .map(RestaurantDTO::fromEntity)
+        //         .toList();
+        // return ResponseEntity.ok(result);
+                List<RestaurantDTO> result = restaurantRepo.findAll().stream()
+                .map(restaurant -> {
+                    DistanceService.RouteInfo routeInfo = distanceService.getDistanceAndDuration(
+                            userLng, userLat,
+                            restaurant.getLongitude(), restaurant.getLatitude()
+                    );
+                    return RestaurantDTO.fromEntity(
+                            restaurant, 
+                            routeInfo.distanceInMeters, 
+                            routeInfo.durationInSeconds
+                    );
+                })
+                .sorted(Comparator.comparingDouble(RestaurantDTO::getDistance))
                 .toList();
+        
         return ResponseEntity.ok(result);
     }
 
-    // GET /restaurants/{id}
+    // // GET /restaurants/{id}
+    // @GetMapping("/{id}")
+    // public ResponseEntity<?> getRestaurantById(@PathVariable Long id) {
+    //     // return restaurantRepo.findById(id)
+    //     //         .map(res -> ResponseEntity.ok(RestaurantDTO.fromEntity(res)))
+    //     //         .orElse(ResponseEntity.notFound().build());
+    // }
+
     @GetMapping("/{id}")
-    public ResponseEntity<?> getRestaurantById(@PathVariable Long id) {
+    public ResponseEntity<?> getRestaurantById(
+            @PathVariable Long id,
+            @RequestParam(required = true) double userLat,
+            @RequestParam(required = true) double userLng
+    ) {
         return restaurantRepo.findById(id)
-                .map(res -> ResponseEntity.ok(RestaurantDTO.fromEntity(res)))
+                .map(restaurant -> {
+                    DistanceService.RouteInfo routeInfo = distanceService.getDistanceAndDuration(
+                            userLng, userLat,
+                            restaurant.getLongitude(), restaurant.getLatitude()
+                    );
+                    RestaurantDTO dto = RestaurantDTO.fromEntity(
+                            restaurant,
+                            routeInfo.distanceInMeters,
+                            routeInfo.durationInSeconds
+                    );
+                    return ResponseEntity.ok(dto);
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
