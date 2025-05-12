@@ -1,5 +1,6 @@
 package Manager.Restaurant.mai.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,6 +13,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+
 public class User {
 
     @Id
@@ -27,6 +29,7 @@ public class User {
     private String userPhone;
     private String userAvatar;
     private LocalDateTime userDob;
+
 
     @ManyToOne
     @JoinColumn(name = "user_role")
@@ -45,6 +48,11 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     private List<Review> reviews;
+
+    @OneToOne(mappedBy = "user")
+    @JsonIgnore
+    private Cart cart;
+
 
     public User(String userSlug, String userName, String userEmail, String userPassword, String userSalt,
                 String userGender, String userPhone, String userAvatar, LocalDateTime userDob,

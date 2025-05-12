@@ -5,7 +5,6 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
 public class CartItemRequest {
     private String name;
     private double price;

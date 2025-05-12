@@ -26,7 +26,5 @@ public class CartItem {
     @JsonBackReference
     private Cart cart;
 
-
-
 }
 
