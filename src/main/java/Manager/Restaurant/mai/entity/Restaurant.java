@@ -23,7 +23,7 @@ public class Restaurant {
     private String imageUrl;
     private Float rating;
     private Integer ratingCount;
-    private String address;
+    //private String address;
     private String priceRange;
     private String openingStatus; // e.g. "OPEN", "CLOSED", "SCHEDULED"
     private String businessHours; // e.g. "08:00-22:00" or null

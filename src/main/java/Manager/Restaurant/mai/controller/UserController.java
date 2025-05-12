@@ -3,6 +3,7 @@ package Manager.Restaurant.mai.controller;
 import Manager.Restaurant.mai.dto.UserProfileDTO;
 import Manager.Restaurant.mai.entity.User;
 import Manager.Restaurant.mai.repository.*;
+import Manager.Restaurant.mai.service.GeocodingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static java.util.stream.Collectors.toList;
+
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/user")
@@ -22,6 +25,23 @@ public class UserController {
     private final AddressRepository addressRepo;
     private final ReviewRepository reviewRepo;
     private final NotificationRepository notificationRepo;
+
+    private final GeocodingService geocodingService;
+
+    @GetMapping("/get-address")
+    public ResponseEntity<?> getAddressFromCoordinates(
+        @RequestParam double lat,
+        @RequestParam double lon
+    ) {
+        try {
+            String address = geocodingService.getAddressFromCoordinates(lat, lon);
+            return ResponseEntity.ok(new HashMap<String, String>() {{
+                put("address", address);
+            }});
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Không thể lấy địa chỉ từ tọa độ");
+        }
+    }
 
     // ✅ Lấy thông tin người dùng theo ID (chỉ khi chưa bị xoá)
     @GetMapping("/profile")

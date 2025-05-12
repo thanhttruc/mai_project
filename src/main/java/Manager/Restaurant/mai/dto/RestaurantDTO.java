@@ -26,14 +26,14 @@ public class RestaurantDTO {
     private Long createdAt;
     private Integer durationInMinutes;
 
-    public static RestaurantDTO fromEntity(Restaurant res, double distanceInMeters, double durationInSeconds) {
+    public static RestaurantDTO fromEntity(Restaurant res, String address, double distanceInMeters, double durationInSeconds) {
         return new RestaurantDTO(
                 res.getId(),
                 res.getName(),
                 res.getImageUrl(),
                 res.getRating(),
                 res.getRatingCount(),
-                res.getAddress(),
+                address,
                 res.getPriceRange(),
                 res.getOpeningStatus(),
                 res.getBusinessHours(),

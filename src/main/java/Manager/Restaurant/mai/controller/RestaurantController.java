@@ -5,12 +5,14 @@ import Manager.Restaurant.mai.entity.Restaurant;
 import Manager.Restaurant.mai.dto.*;
 import Manager.Restaurant.mai.repository.*;
 import Manager.Restaurant.mai.service.DistanceService;
+import Manager.Restaurant.mai.service.GeocodingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,6 +23,7 @@ public class RestaurantController {
 
     private final RestaurantRepository restaurantRepo;
     private final DistanceService distanceService;
+    private final GeocodingService geocodingService;
     private final MenuItemRepository menuItemRepo;
 
     // GET /restaurants
@@ -33,20 +36,28 @@ public class RestaurantController {
         //         .map(RestaurantDTO::fromEntity)
         //         .toList();
         // return ResponseEntity.ok(result);
-                List<RestaurantDTO> result = restaurantRepo.findAll().stream()
-                .map(restaurant -> {
-                    DistanceService.RouteInfo routeInfo = distanceService.getDistanceAndDuration(
-                            userLng, userLat,
-                            restaurant.getLongitude(), restaurant.getLatitude()
-                    );
-                    return RestaurantDTO.fromEntity(
-                            restaurant, 
-                            routeInfo.distanceInMeters, 
-                            routeInfo.durationInSeconds
-                    );
-                })
-                .sorted(Comparator.comparingDouble(RestaurantDTO::getDistance))
-                .toList();
+
+        List<RestaurantDTO> result = restaurantRepo.findAll().stream()
+        .map(restaurant -> {
+            DistanceService.RouteInfo routeInfo = distanceService.getDistanceAndDuration(
+                    userLng, userLat,
+                    restaurant.getLongitude(), restaurant.getLatitude()
+            );
+
+            String address = geocodingService.getAddressFromCoordinates(
+                restaurant.getLatitude(),
+                restaurant.getLongitude()
+            );
+
+            return RestaurantDTO.fromEntity(
+                    restaurant, 
+                    address,
+                    routeInfo.distanceInMeters, 
+                    routeInfo.durationInSeconds
+            );
+        })
+            .sorted(Comparator.comparingDouble(RestaurantDTO::getDistance))
+            .toList();
         
         return ResponseEntity.ok(result);
     }
@@ -71,8 +82,13 @@ public class RestaurantController {
                             userLng, userLat,
                             restaurant.getLongitude(), restaurant.getLatitude()
                     );
+            String address = geocodingService.getAddressFromCoordinates(
+                restaurant.getLatitude(),
+                restaurant.getLongitude()
+            );
                     RestaurantDTO dto = RestaurantDTO.fromEntity(
                             restaurant,
+                            address,
                             routeInfo.distanceInMeters,
                             routeInfo.durationInSeconds
                     );
