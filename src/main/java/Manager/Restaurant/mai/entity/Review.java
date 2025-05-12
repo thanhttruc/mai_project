@@ -5,41 +5,52 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+
+import java.time.Instant;
+import java.util.List;
+
 @Entity
 @Table(name = "reviews")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Review {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long reviewId;
+    private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @ManyToOne @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
-    @JoinColumn(name = "item_id")
-    private MenuItem item;
+    @ManyToOne @JoinColumn(name = "item_id")
+    private MenuItem food;
 
-    private String comment;
-    private LocalDateTime createdAt;
+    @ManyToOne @JoinColumn(name = "restaurant_id", nullable = false)
+    private Restaurant restaurant;
+
+    @ManyToOne @JoinColumn(name = "order_id")
+    private Order order;
+
+    @Column(nullable = false)
+    private String content;
+
+    @Column(nullable = false)
+    private float rating; // 1.0 - 5.0
+
+    @ElementCollection
+    @CollectionTable(name = "review_images", joinColumns = @JoinColumn(name = "review_id"))
+    @Column(name = "image_url")
+    private List<String> imageUrls;
+
+    @Column(nullable = false)
+    private Instant createdAt;
+
+    @Column(nullable = false)
+    private boolean isAnonymous;
 
     @Column(nullable = false)
     private boolean isDeleted = false;
-
-    @ManyToOne
-    @JoinColumn(name = "restaurant_id")
-    private Restaurant restaurant;
-
-    public Review(Long reviewId, User user, MenuItem item, Restaurant restaurant, String comment, LocalDateTime createdAt) {
-        this.reviewId = reviewId;
-        this.user = user;
-        this.item = item;
-        this.restaurant = restaurant;
-        this.comment = comment;
-        this.createdAt = createdAt;
-        this.isDeleted = false;
-    }
 }

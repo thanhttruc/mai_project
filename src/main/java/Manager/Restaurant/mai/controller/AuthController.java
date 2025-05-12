@@ -35,7 +35,7 @@ public class AuthController {
         Long roleId = Long.parseLong(payload.get("roleId").toString());
         Optional<Role> roleOpt = roleRepo.findById(roleId);
         if (roleOpt.isEmpty()) {
-            return ResponseEntity.badRequest().body("Không tìm thấy role với ID: " + roleOpt.get().getRoleName());
+            return ResponseEntity.badRequest().body("Không tìm thấy role với ID: " + roleId);
         }
 
         User user = new User();

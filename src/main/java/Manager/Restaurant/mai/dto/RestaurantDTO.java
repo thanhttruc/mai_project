@@ -1,0 +1,47 @@
+package Manager.Restaurant.mai.dto;
+import lombok.*;
+import java.util.List;
+import Manager.Restaurant.mai.entity.*;
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class RestaurantDTO {
+    private Long id;
+    private String name;
+    private String imageUrl;
+    private Float rating;
+    private Integer ratingCount;
+    private String address;
+    private String priceRange;
+    private String openingStatus;
+    private String businessHours;
+    private String serviceType;
+    private String phoneNumber;
+    private Integer likes;
+    private Integer reviewsCount;
+    private Double distance;
+    private List<String> categories;
+    private Long createdAt;
+
+    public static RestaurantDTO fromEntity(Restaurant res) {
+        return new RestaurantDTO(
+                res.getId(),
+                res.getName(),
+                res.getImageUrl(),
+                res.getRating(),
+                res.getRatingCount(),
+                res.getAddress(),
+                res.getPriceRange(),
+                res.getOpeningStatus(),
+                res.getBusinessHours(),
+                res.getServiceType(),
+                res.getPhoneNumber(),
+                res.getLikes(),
+                res.getReviewsCount(),
+                res.getDistance(),
+                res.getCategories(),
+                res.getCreatedAt()
+        );
+    }
+}

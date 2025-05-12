@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -21,62 +22,68 @@ public class ReviewController {
     private final UserRepository userRepo;
     private final MenuItemRepository itemRepo;
     private final RestaurantRepository restaurantRepo;
+    private final OrderRepository orderRepo;
 
-    // POST /reviews/restaurant - Thêm review cho nhà hàng
-    @PostMapping("/restaurant")
-    public ResponseEntity<?> addRestaurantReview(@RequestBody Map<String, Object> data) {
-        Long userId = Long.valueOf(data.get("userId").toString());
-        Long resId = Long.valueOf(data.get("restaurantId").toString());
-        String comment = data.get("comment").toString();
+    @PostMapping
+    public ResponseEntity<?> addReview(@RequestBody Map<String, Object> data) {
+        try {
+            Long userId = Long.valueOf(data.get("userId").toString());
+            Long restaurantId = Long.valueOf(data.get("restaurantId").toString());
+            String content = data.get("content").toString();
+            float rating = Float.parseFloat(data.get("rating").toString());
+            boolean isAnonymous = Boolean.parseBoolean(data.get("isAnonymous").toString());
+            List<String> imageUrls = (List<String>) data.getOrDefault("imageUrls", List.of());
 
-        // Kiểm tra xem người dùng và nhà hàng có tồn tại không
-        User user = userRepo.findById(userId).orElse(null);
-        Restaurant restaurant = restaurantRepo.findById(resId).orElse(null);
+            Long foodId = data.get("foodId") != null ? Long.valueOf(data.get("foodId").toString()) : null;
+            Long orderId = data.get("orderId") != null ? Long.valueOf(data.get("orderId").toString()) : null;
 
-        if (user == null || restaurant == null) {
-            return ResponseEntity.badRequest().body("Người dùng hoặc nhà hàng không tồn tại.");
+            User user = userRepo.findById(userId).orElseThrow();
+            Restaurant restaurant = restaurantRepo.findById(restaurantId).orElseThrow();
+
+            MenuItem food = (foodId != null) ? itemRepo.findById(foodId).orElse(null) : null;
+            Order order = (orderId != null) ? orderRepo.findById(orderId).orElse(null) : null;
+
+            Review review = Review.builder()
+                    .user(user)
+                    .restaurant(restaurant)
+                    .food(food)
+                    .order(order)
+                    .content(content)
+                    .rating(rating)
+                    .imageUrls(imageUrls)
+                    .isAnonymous(isAnonymous)
+                    .createdAt(Instant.now())
+                    .isDeleted(false)
+                    .build();
+
+            reviewRepo.save(review);
+
+            return ResponseEntity.ok(Map.of("message", "Đánh giá đã được thêm", "reviewId", review.getId()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Dữ liệu không hợp lệ hoặc thiếu.");
         }
-
-        // Thêm review cho nhà hàng
-        Review review = new Review(null, user, null, restaurant, comment, LocalDateTime.now());
-        reviewRepo.save(review);
-
-        return ResponseEntity.ok(Map.of("message", "Review nhà hàng đã được thêm.", "reviewId", review.getReviewId()));
     }
 
-    // GET /reviews/restaurant/{restaurantId} - Lấy review theo nhà hàng
-    @GetMapping("/restaurant/{resId}")
-    public ResponseEntity<?> getReviewsByRestaurant(@PathVariable Long resId) {
-        // Tìm reviews cho nhà hàng
-        List<Review> reviewsForRestaurant = reviewRepo.findByRestaurant_ResIdAndIsDeletedFalse(resId);
-        List<ReviewDTO> reviewDTOs = reviewsForRestaurant.stream()
-                .map(ReviewDTO::fromEntity)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(reviewDTOs);
+    @GetMapping("/restaurant/{restaurantId}")
+    public ResponseEntity<?> getReviewsByRestaurant(@PathVariable Long restaurantId) {
+        List<Review> reviews = reviewRepo.findByRestaurant_IdAndIsDeletedFalse(restaurantId);
+        List<ReviewDTO> result = reviews.stream().map(ReviewDTO::fromEntity).toList();
+        return ResponseEntity.ok(result);
     }
 
-    // GET /reviews/item/{itemId} - Lấy danh sách review theo món ăn
     @GetMapping("/item/{itemId}")
     public ResponseEntity<?> getReviewsByItem(@PathVariable Long itemId) {
-        // Tìm reviews cho món ăn
-        List<Review> reviewsForItem = reviewRepo.findByItem_ItemIdAndIsDeletedFalse(itemId);
-        List<ReviewDTO> reviewDTOs = reviewsForItem.stream()
-                .map(ReviewDTO::fromEntity)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(reviewDTOs);
+        List<Review> reviews = reviewRepo.findByFood_ItemIdAndIsDeletedFalse(itemId);
+        List<ReviewDTO> result = reviews.stream().map(ReviewDTO::fromEntity).toList();
+        return ResponseEntity.ok(result);
     }
 
-    // DELETE /reviews/{id} - Xoá mềm review
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteReview(@PathVariable Long id) {
-        return reviewRepo.findById(id)
-                .map(review -> {
-                    // Đánh dấu review là đã bị xóa
-                    review.setDeleted(true);
-                    reviewRepo.save(review);
-                    return ResponseEntity.ok(Map.of("message", "Review đã được xoá."));
-                }).orElse(ResponseEntity.notFound().build());
+        return reviewRepo.findById(id).map(review -> {
+            review.setDeleted(true);
+            reviewRepo.save(review);
+            return ResponseEntity.ok(Map.of("message", "Đánh giá đã được xoá mềm."));
+        }).orElse(ResponseEntity.notFound().build());
     }
 }

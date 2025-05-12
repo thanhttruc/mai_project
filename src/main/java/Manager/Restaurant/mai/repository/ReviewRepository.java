@@ -11,8 +11,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findByUser_UserIdAndIsDeletedFalse(Long userId);
 
     // Tìm kiếm review theo restaurantId và isDeleted là false
-    List<Review> findByRestaurant_ResIdAndIsDeletedFalse(Long restaurantId);
+    List<Review> findByRestaurant_IdAndIsDeletedFalse(Long restaurantId);
 
     // Tìm kiếm review theo menuItemId và isDeleted là false
-    List<Review> findByItem_ItemIdAndIsDeletedFalse(Long itemId);
+    List<Review> findByFood_ItemIdAndIsDeletedFalse(Long itemId);
 }

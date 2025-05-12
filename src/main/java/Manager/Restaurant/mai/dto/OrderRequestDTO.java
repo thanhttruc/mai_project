@@ -1,14 +1,17 @@
 package Manager.Restaurant.mai.dto;
 
-import lombok.Data;
+import lombok.*;
 
 import java.math.BigDecimal;
 
 @Data
-public class OrderDTO {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class OrderRequestDTO {
     private Long userId;
     private Long addressId;
-    private BigDecimal totalAmount;
-    private String orderStatus;
     private Long voucherId;
 }

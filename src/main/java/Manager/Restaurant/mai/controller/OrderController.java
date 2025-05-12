@@ -1,14 +1,16 @@
 package Manager.Restaurant.mai.controller;
 
-import Manager.Restaurant.mai.dto.OrderDTO;
+import Manager.Restaurant.mai.dto.OrderRequestDTO;
 import Manager.Restaurant.mai.dto.OrderResponseDTO;
 import Manager.Restaurant.mai.dto.PaymentDTO;
 import Manager.Restaurant.mai.entity.*;
 import Manager.Restaurant.mai.repository.*;
+import Manager.Restaurant.mai.service.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -22,9 +24,11 @@ public class OrderController {
     private final UserRepository userRepo;
     private final AddressRepository addressRepo;
     private final VoucherRepository voucherRepo;
+    private final CartService cartService;
 
-    @PostMapping
-    public ResponseEntity<?> createOrder(@RequestBody OrderDTO dto) {
+
+    @PostMapping("/create")
+    public ResponseEntity<?> createOrder(@RequestBody OrderRequestDTO dto) {
         Optional<User> userOpt = userRepo.findById(dto.getUserId());
         Optional<Address> addressOpt = addressRepo.findById(dto.getAddressId());
 
@@ -39,11 +43,21 @@ public class OrderController {
             return ResponseEntity.badRequest().body("Người dùng hoặc địa chỉ đã bị xoá!");
         }
 
+        // Lấy giỏ hàng hiện tại
+        Cart cart = cartService.getCartByUser(user.getUserId());
+        if (cart.getItems().isEmpty()) {
+            return ResponseEntity.badRequest().body("Giỏ hàng đang trống, không thể tạo đơn hàng!");
+        }
+
+        // Tính tổng tiền từ giỏ hàng
+        double totalPrice = cart.getTotalPrice();
+
+        // Tạo đơn hàng mới
         Order order = new Order();
         order.setUser(user);
         order.setShippingAddress(address);
-        order.setTotalAmount(dto.getTotalAmount());
-        order.setOrderStatus(dto.getOrderStatus() != null ? dto.getOrderStatus() : "PENDING");
+        order.setTotalAmount(BigDecimal.valueOf(totalPrice));
+        order.setOrderStatus("PENDING");
         order.setOrderDate(LocalDateTime.now());
         order.setOrderCreatedAt(LocalDateTime.now());
         order.setOrderUpdatedAt(LocalDateTime.now());
@@ -55,6 +69,9 @@ public class OrderController {
         }
 
         Order savedOrder = orderRepo.save(order);
+
+        // Xoá giỏ hàng sau khi đặt đơn
+        cartService.clearCart(user.getUserId());
 
         OrderResponseDTO response = OrderResponseDTO.builder()
                 .orderId(savedOrder.getOrderId())
@@ -108,5 +125,26 @@ public class OrderController {
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
+
+    //Cập nhật trạng thái đơn hàng//
+    @PutMapping("/{orderId}/status")
+    public ResponseEntity<?> updateOrderStatus(
+            @PathVariable Long orderId,
+            @RequestParam String status
+    ) {
+        Optional<Order> orderOpt = orderRepo.findById(orderId);
+        if (orderOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("Không tìm thấy đơn hàng.");
+        }
+
+        Order order = orderOpt.get();
+        order.setOrderStatus(status.toUpperCase());
+        order.setOrderUpdatedAt(LocalDateTime.now());
+
+        orderRepo.save(order);
+
+        return ResponseEntity.ok("Cập nhật trạng thái đơn hàng thành công.");
+    }
+
 
 }

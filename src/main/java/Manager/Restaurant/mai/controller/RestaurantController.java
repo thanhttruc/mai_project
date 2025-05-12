@@ -2,8 +2,8 @@ package Manager.Restaurant.mai.controller;
 
 import Manager.Restaurant.mai.entity.MenuItem;
 import Manager.Restaurant.mai.entity.Restaurant;
-import Manager.Restaurant.mai.repository.MenuItemRepository;
-import Manager.Restaurant.mai.repository.RestaurantRepository;
+import Manager.Restaurant.mai.dto.*;
+import Manager.Restaurant.mai.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,16 +22,19 @@ public class RestaurantController {
 
     // GET /restaurants
     @GetMapping
-    public ResponseEntity<List<Restaurant>> getAllRestaurants() {
-        return ResponseEntity.ok(restaurantRepo.findAll());
+    public ResponseEntity<List<RestaurantDTO>> getAllRestaurants() {
+        List<RestaurantDTO> result = restaurantRepo.findAll().stream()
+                .map(RestaurantDTO::fromEntity)
+                .toList();
+        return ResponseEntity.ok(result);
     }
 
     // GET /restaurants/{id}
     @GetMapping("/{id}")
     public ResponseEntity<?> getRestaurantById(@PathVariable Long id) {
-        Optional<Restaurant> restaurantOpt = restaurantRepo.findById(id);
-        return restaurantOpt.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        return restaurantRepo.findById(id)
+                .map(res -> ResponseEntity.ok(RestaurantDTO.fromEntity(res)))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     // POST /restaurants/{id}/menu
@@ -65,7 +68,7 @@ public class RestaurantController {
         }
 
         MenuItem item = itemOpt.get();
-        if (!item.getRestaurant().getResId().equals(restaurantId)) {
+        if (!item.getRestaurant().getId().equals(restaurantId)) {
             return ResponseEntity.badRequest().body("MenuItem không thuộc nhà hàng này.");
         }
 
